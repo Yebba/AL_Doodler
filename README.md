@@ -11,3 +11,8 @@ Once the everything is set up in the code editor, click the "play" (green triang
 
 ## Step 4: Enjoy doodling!
 ![5](https://github.com/user-attachments/assets/ff877a53-ae36-44a8-b1ed-4d7078b573eb)
+
+# Online sources used
+1. I used these video tutorials to help me develop the app. I didn't follow it exactly, since I had to add / change things to fit the required features for this assignment: https://youtube.com/playlist?list=PLW98DQDDUrRhUf167J9K8KmwoK6iUA4Gi&si=Qmc8w42eXIein4e_
+2. For the color picker used for the brush tool: https://github.com/QuadFlask/colorpicker
+3. For troubleshooting cleaning / rebuilding the project: https://stackoverflow.com/questions/34421193/could-not-determine-the-dependencies-of-task-appcrashlyticsstoredeobsdebug-i
