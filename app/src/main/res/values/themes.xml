@@ -14,5 +14,5 @@
         <item name="android:screenOrientation">portrait</item>
     </style>
 
-    <style name="AppTheme.Overlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar"/>
+    <style name="AppTheme.Overlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
 </resources>

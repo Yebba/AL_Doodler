@@ -1,16 +1,25 @@
 package com.example.al_doodler;
 
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.Manifest;
+import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -23,11 +32,18 @@ import com.flask.colorpicker.ColorPickerView;
 import com.flask.colorpicker.builder.ColorPickerClickListener;
 import com.flask.colorpicker.builder.ColorPickerDialogBuilder;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.List;
+import java.util.UUID;
+
 // This is the file that brings everything together.
 public class MainActivity extends AppCompatActivity implements ToolsListener {
 
+    private static final int REQUEST_PERMISSION = 1001;
     DoodleView mDoodleView;
     int colorBackground, colorBrush;
     int brushSize, eraserSize;
@@ -83,12 +99,48 @@ public class MainActivity extends AppCompatActivity implements ToolsListener {
     }
 
     public void showFiles(View view) {
+        startActivity(new Intent(this, ListFilesAct.class));
     }
 
     public void saveFile(View view) {
+        saveBitmap();
+//        if(ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
+//            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_PERMISSION);
+//        }else {
+//            saveBitmap();
+//        }
     }
 
-//  This function decides what to do depending on which tool is selected.
+    private void saveBitmap() {
+        Bitmap bitmap = mDoodleView.getBitmap();
+        String file_name = UUID.randomUUID() + ".png";
+
+        File folder = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES) + File.separator+getString(R.string.app_name));
+
+        if(!folder.exists()){
+            folder.mkdirs();
+        }
+
+        try {
+            FileOutputStream fileOutputStream = new FileOutputStream(folder+File.separator+file_name);
+            bitmap.compress(Bitmap.CompressFormat.PNG,100,fileOutputStream);
+            Toast.makeText(this, "doodle saved!", Toast.LENGTH_SHORT).show();
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+
+        if(requestCode == REQUEST_PERMISSION && grantResults.length >0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+            saveBitmap();
+        }
+
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+    //  This function decides what to do depending on which tool is selected.
     @Override
     public void onSelected(String name) {
 
