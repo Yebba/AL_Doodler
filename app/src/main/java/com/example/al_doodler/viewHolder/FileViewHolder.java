@@ -1,5 +1,6 @@
 package com.example.al_doodler.viewHolder;
 
+import android.view.ContextMenu;
 import android.view.View;
 import android.widget.ImageView;
 
@@ -8,6 +9,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.al_doodler.Interface.ViewOnClick;
 import com.example.al_doodler.R;
+import com.example.al_doodler.common.Common;
 
 public class FileViewHolder extends RecyclerView.ViewHolder {
     public ImageView imageView;
@@ -26,6 +28,13 @@ public class FileViewHolder extends RecyclerView.ViewHolder {
             @Override
             public void onClick(View view){
                 viewOnClick.onClick(getAdapterPosition());
+            }
+        });
+
+        itemView.setOnCreateContextMenuListener(new View.OnCreateContextMenuListener() {
+            @Override
+            public void onCreateContextMenu(ContextMenu contextMenu, View view, ContextMenu.ContextMenuInfo contextMenuInfo) {
+                contextMenu.add(0,0,getAdapterPosition(), Common.DELETE);
             }
         });
     }

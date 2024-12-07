@@ -1,10 +1,14 @@
 package com.example.al_doodler;
 
+import android.annotation.SuppressLint;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -17,6 +21,7 @@ import android.Manifest;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -44,9 +49,11 @@ import java.util.UUID;
 public class MainActivity extends AppCompatActivity implements ToolsListener {
 
     private static final int REQUEST_PERMISSION = 1001;
+    private static final int PICK_IMAGE = 1000;
     DoodleView mDoodleView;
     int colorBackground, colorBrush;
     int brushSize, eraserSize;
+    private Object canvas;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,6 +88,7 @@ public class MainActivity extends AppCompatActivity implements ToolsListener {
 
         result.add(new ToolsItem(R.drawable.baseline_brush_24, Common.BRUSH));
         result.add(new ToolsItem(R.drawable.eraser_white, Common.ERASER));
+        result.add(new ToolsItem(R.drawable.icons8_rubber_stamp_48, Common.IMAGE));
         result.add(new ToolsItem(R.drawable.baseline_palette_24, Common.COLORS));
         result.add(new ToolsItem(R.drawable.paint_white, Common.BACKGROUND));
         result.add(new ToolsItem(R.drawable.baseline_undo_24, Common.RETURN));
@@ -96,6 +104,12 @@ public class MainActivity extends AppCompatActivity implements ToolsListener {
 
 //  This empty functions are for later functionality. I'll choose one of them for IA09.
     public void shareApp(View view) {
+       Intent intent = new Intent(Intent.ACTION_SEND);
+       intent.setType("text/plain");
+       String bodyText = "http://play.google.com/store/apps/details?id="+getPackageName();
+       intent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.app_name));
+       intent.putExtra(Intent.EXTRA_TEXT, bodyText);
+       startActivity(Intent.createChooser(intent,"share this app"));
     }
 
     public void showFiles(View view) {
@@ -146,35 +160,78 @@ public class MainActivity extends AppCompatActivity implements ToolsListener {
 
         switch (name){
             case Common.BRUSH:
+                mDoodleView.toMove = false;
                 mDoodleView.disableEraser();
+                mDoodleView.invalidate();
                 showDialogSize(false);
                 break;
 
             case Common.ERASER:
+                mDoodleView.toMove = false;
                 mDoodleView.enableEraser();
+                mDoodleView.invalidate();
                 showDialogSize(true);
                 break;
 
             case Common.RETURN:
+                mDoodleView.toMove = false;
                 mDoodleView.returnLastAction();
+                mDoodleView.invalidate();
                 break;
 
             case Common.BACKGROUND:
+                mDoodleView.toMove = false;
                 updateColor(name);
+                mDoodleView.invalidate();
                 break;
 
             case Common.COLORS:
+                mDoodleView.toMove = false;
                 updateColor(name);
+                mDoodleView.invalidate();
                 break;
 
             case Common.CLEAR:
                 mDoodleView.clearCanvas();
                 break;
+
+            case Common.IMAGE:
+                getImage();
+                break;
         }
 
     }
 
-//  Change the color of either the brush or the background, depending on which is currently selected.
+    private void getImage() {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("image/*");
+        startActivityForResult(Intent.createChooser(intent,"Select picture"), PICK_IMAGE);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+
+        if (requestCode == PICK_IMAGE && data != null && resultCode == RESULT_OK) {
+            Uri pickedImage = data.getData();
+            String[] filePath = {MediaStore.Images.Media.DATA};
+            Cursor cursor = getContentResolver().query(pickedImage, filePath, null, null, null);
+            cursor.moveToFirst();
+            @SuppressLint("Range") String imagePath = cursor.getString(cursor.getColumnIndex(filePath[0]));
+
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+
+            Bitmap bitmap = BitmapFactory.decodeFile(imagePath,options);
+
+            mDoodleView.setImage(bitmap);
+
+            cursor.close();
+        }
+
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    //  Change the color of either the brush or the background, depending on which is currently selected.
     private void updateColor(String name) {
 
         int color;

@@ -2,8 +2,10 @@ package com.example.al_doodler.widget;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PorterDuff;
@@ -14,18 +16,27 @@ import android.view.View;
 
 import androidx.annotation.Nullable;
 
+import com.example.al_doodler.R;
+
 import java.util.ArrayList;
 
 public class DoodleView extends View {
 
-    private Bitmap btmBackground,btmView;
+    private Bitmap btmBackground,btmView, image, captureImage, originalImage, rotateImage;
     private Paint mPaint = new Paint();
     private Path mPath = new Path();
     private int colorBackground, sizeBrush, sizeEraser;
     private float mX, mY;
-    private Canvas mCanvas;
+    public Canvas mCanvas;
     private final int DIFFERENCE_SPACE = 4;
     private ArrayList<Bitmap> listAction = new ArrayList<>();
+    private int leftImage = 50,topImage = 50;
+    public static boolean toMove = false;
+    private boolean toResize = false;
+    private float refX, refY;
+    private int xCenter , yCenter;
+    private float xRotate, yRotate;
+    private int angle = 0;
 
 
     public DoodleView(Context context, @Nullable AttributeSet attrs) {
@@ -48,6 +59,8 @@ public class DoodleView extends View {
         mPaint.setStrokeJoin(Paint.Join.ROUND);
         mPaint.setStrokeWidth(toPx(sizeBrush));
 
+        rotateImage = BitmapFactory.decodeResource(getResources(), R.drawable.icons8_rotate_right_48);
+        captureImage = BitmapFactory.decodeResource(getResources(), R.drawable.icons8_rubber_stamp_48);
     }
 
     private float toPx(int sizeBrush) {
@@ -65,17 +78,40 @@ public class DoodleView extends View {
     }
 
     @Override
-    protected void onDraw(Canvas canvas){
-        super.onDraw(canvas);
+    protected void onDraw(Canvas mCanvas){
+        super.onDraw(mCanvas);
 
-        canvas.drawColor(colorBackground);
-        canvas.drawBitmap(btmBackground, 0, 0, null);
-        canvas.drawBitmap(btmView, 0, 0, null);
+        mCanvas.drawColor(colorBackground);
+        mCanvas.drawBitmap(btmBackground, 0, 0, null);
+
+        if (image != null && toMove) {
+            // mCanvas.drawBitmap(image, leftImage, topImage, null);
+            drawImage(mCanvas);
+            xCenter = leftImage + image.getWidth()/2 - captureImage.getWidth()/2;
+            yCenter = topImage + image.getHeight()/2 - captureImage.getHeight()/2;
+
+            xRotate = leftImage + image.getWidth() + toPx(10);
+            yRotate = topImage - toPx(10);
+            mCanvas.drawBitmap(rotateImage, xRotate, yRotate, null);
+
+            mCanvas.drawBitmap(captureImage, xCenter, yCenter, null);
+
+        }
+
+        mCanvas.drawBitmap(btmView, 0, 0, null);
+    }
+
+    private void drawImage(Canvas mCanvas) {
+        Matrix matrix = new Matrix();
+        matrix.setRotate(angle, image.getWidth()/2, image.getHeight()/2);
+        matrix.postTranslate(leftImage, topImage);
+        mCanvas.drawBitmap(image, matrix, null);
     }
 
     public void setColorBackground(int color){
         colorBackground = color;
         invalidate();
+        addLastAction(getBitmap());
     }
 
     public void setSizeBrush(int s){
@@ -136,17 +172,94 @@ public class DoodleView extends View {
 
             case MotionEvent.ACTION_DOWN:
                 touchStart(x,y);
+                refX=x;
+                refY=y;
+
+                if (toMove){
+
+                    if (isToResize(refX,refY)){
+                        toResize = true;
+                    } else {
+                        toResize = false;
+                    }
+
+                    if ((refX >= xCenter && refX < xCenter + captureImage.getWidth())
+                            && (refY >= yCenter && refY < yCenter + captureImage.getHeight())){
+
+                        Canvas newCanvas = new Canvas(btmBackground);
+                        //newCanvas.drawBitmap(image, leftImage, topImage, null);
+                        drawImage(newCanvas);
+                        invalidate();
+                    }
+
+                    if ((refX >= xRotate && refX <= xRotate + rotateImage.getWidth())
+                        && (refY >= yRotate && refY <= yRotate + rotateImage.getHeight())){
+                        angle +=45;
+                        invalidate();
+                    }
+
+                }
+
                 break;
             case MotionEvent.ACTION_MOVE:
-                touchMove(x,y);
+                if(!toMove) {
+                    touchMove(x, y);
+                } else {
+                    float nX = event.getX();
+                    float nY= event.getY();
+
+                    if (toResize){
+
+                        int xScale = 0;
+                        int yScale = 0;
+
+                        if (nX > refX){
+                            xScale = (int) (image.getWidth() + (nX - refX));
+                        } else {
+                            xScale = (int) (image.getWidth() - (refX - nX));
+                        }
+                        if (nY > refY){
+                            yScale = (int) (image.getHeight() + (nY - refY));
+                        } else {
+                            yScale = (int) (image.getHeight() - (refY - nY));
+                        }
+
+                        if (xScale >0 && yScale >0){
+                            image = Bitmap.createScaledBitmap(originalImage, xScale, yScale,false);
+                        }
+
+                    } else {
+
+                        leftImage += nX - refX;
+                        topImage += nY - refY;
+
+                    }
+
+                    refX = nX;
+                    refY = nY;
+                    invalidate();
+                }
                 break;
             case MotionEvent.ACTION_UP:
-                touchUp();
+
+                if (!toMove) {
+                    touchUp();
+                }
                 addLastAction(getBitmap());
                 break;
         }
 
         return true;
+    }
+
+    private boolean isToResize(float refX, float refY) {
+
+        if ((refX >= leftImage && refX < leftImage + image.getWidth()) &&
+                (refY >= topImage && refY <= topImage + 20) || (refY >= topImage + image.getHeight() - 20 && refY <= topImage + image.getHeight())){
+            return true;
+        }
+
+        return false;
     }
 
     private void touchUp() {
@@ -190,10 +303,37 @@ public class DoodleView extends View {
     }
 
     public void clearCanvas() {
-        colorBackground = Color.WHITE;
-        listAction.removeAll(listAction);
+        // Canvas mCanvas;
+        //listAction.removeAll(listAction);
+        btmBackground = Bitmap.createBitmap(getWidth(), getHeight(), Bitmap.Config.ARGB_8888);
         btmView = Bitmap.createBitmap(getWidth(), getHeight(), Bitmap.Config.ARGB_8888);
-        mCanvas = new Canvas(btmView);
+        mCanvas = new Canvas(btmBackground);
+        //mCanvas.drawColor(Color.WHITE);
+        colorBackground = Color.WHITE;
+        mCanvas.drawBitmap(btmBackground, 0, 0, null);
+        mCanvas.drawBitmap(btmView, 0, 0, null);
+
+        invalidate();
+        addLastAction(getBitmap());
+    }
+
+    public void setImage(Bitmap bitmap) {
+        final int maxSize = 960;
+        int outWidth;
+        int outHeight;
+        int inWidth = bitmap.getWidth();
+        int inHeight = bitmap.getHeight();
+        if(inWidth > inHeight){
+            outWidth = maxSize;
+            outHeight = (inHeight * maxSize) / inWidth;
+        } else {
+            outHeight = maxSize;
+            outWidth = (inWidth * maxSize) / inHeight;
+        }
+
+        toMove = true;
+        image = Bitmap.createScaledBitmap(bitmap, outWidth, outHeight, true);
+        originalImage = image;
         invalidate();
     }
 }
