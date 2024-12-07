@@ -74,7 +74,10 @@ public class DoodleView extends View {
 
         btmBackground = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
         btmView = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
-        mCanvas = new Canvas(btmView);
+        // OG (if you use this then you can't erase the image stamps)
+        //mCanvas = new Canvas(btmView);
+
+        mCanvas = new Canvas(btmBackground);
     }
 
     @Override
@@ -156,7 +159,10 @@ public class DoodleView extends View {
                 btmView = Bitmap.createBitmap(getWidth(), getHeight(), Bitmap.Config.ARGB_8888);
             }
 
-            mCanvas = new Canvas(btmView);
+            //OG
+            //mCanvas = new Canvas(btmView);
+
+            mCanvas = new Canvas(btmBackground);
 
             invalidate();
         }
