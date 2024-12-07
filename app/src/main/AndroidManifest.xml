@@ -15,6 +15,9 @@
         android:theme="@style/Theme.AL_Doodler"
         tools:targetApi="31">
         <activity
+            android:name=".ViewFileAct"
+            android:exported="false" />
+        <activity
             android:name=".ListFilesAct"
             android:exported="false"
             android:label="@string/title_activity_list_files"

@@ -1,6 +1,7 @@
 package com.example.al_doodler.adapters;
 
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,7 +10,9 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.al_doodler.Interface.ViewOnClick;
 import com.example.al_doodler.R;
+import com.example.al_doodler.ViewFileAct;
 import com.example.al_doodler.viewHolder.FileViewHolder;
 
 import java.io.File;
@@ -36,6 +39,15 @@ public class FilesAdapters extends RecyclerView.Adapter<FileViewHolder> {
     public void onBindViewHolder(@NonNull FileViewHolder holder, int position) {
 
         holder.imageView.setImageURI(Uri.fromFile(fileList.get(position)));
+
+        holder.setViewOnClick(new ViewOnClick() {
+            @Override
+            public void onClick(int pos) {
+                Intent intent = new Intent(mContext, ViewFileAct.class);
+                intent.setData(Uri.fromFile(fileList.get(pos)));
+                mContext.startActivity(intent);
+            }
+        });
     }
 
     @Override

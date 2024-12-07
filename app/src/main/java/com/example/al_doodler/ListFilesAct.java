@@ -14,12 +14,15 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.al_doodler.adapters.FilesAdapters;
+import com.example.al_doodler.common.Common;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ListFilesAct extends AppCompatActivity {
+
+    List<File> fileList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,15 +32,16 @@ public class ListFilesAct extends AppCompatActivity {
 
         initToolbar();
 
-        initView();
+        initViews();
     }
 
-    private void initView() {
+    private void initViews() {
         RecyclerView recyclerView = findViewById(R.id.recycler_view_files);
         recyclerView.setHasFixedSize(true);
         GridLayoutManager gridLayoutManager = new GridLayoutManager(this, 3);
         recyclerView.setLayoutManager(gridLayoutManager);
-        FilesAdapters filesAdapters = new FilesAdapters(this, loadFile());
+        fileList = loadFile();
+        FilesAdapters filesAdapters = new FilesAdapters(this, fileList);
         recyclerView.setAdapter(filesAdapters);
     }
 
@@ -52,9 +56,11 @@ public class ListFilesAct extends AppCompatActivity {
             }
         }
 
+        TextView textView = findViewById(R.id.status_empty);
         if (files.length >0){
-            TextView textView = findViewById(R.id.status_empty);
             textView.setVisibility(View.GONE);
+        }else{
+            textView.setVisibility(View.VISIBLE);
         }
 
         return inFiles;
@@ -77,5 +83,18 @@ public class ListFilesAct extends AppCompatActivity {
         return true;
     }
 
+    @Override
+    public boolean onContextItemSelected(@NonNull MenuItem item) {
 
+        if (item.getTitle().equals(Common.DELETE)){
+            deleteFile(item.getOrder());
+            initViews();
+        }
+        return true;
+    }
+
+    private void deleteFile(int order) {
+        fileList.get(order).delete();
+        fileList.remove(order);
+    }
 }

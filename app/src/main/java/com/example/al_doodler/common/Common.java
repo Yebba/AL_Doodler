@@ -9,4 +9,7 @@ public class Common {
     public static final String RETURN = "undo";
     public static final String CLEAR = "clear";
 
+    public static final String DELETE = "delete";
+
+    public static final String IMAGE = "image stamp";
 }
